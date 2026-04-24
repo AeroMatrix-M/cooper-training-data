@@ -1,1 +1,602 @@
-
+[
+  {
+    "title": "Anderson Fundamentals of Aerodynamics",
+    "archive_query": "Anderson Fundamentals Aerodynamics textbook",
+    "domain": "aerodynamics",
+    "index": 0
+  },
+  {
+    "title": "Versteeg Introduction to CFD",
+    "archive_query": "Versteeg Introduction Computational Fluid Dynamics",
+    "domain": "CFD",
+    "index": 1
+  },
+  {
+    "title": "Anderson Computational Fluid Dynamics",
+    "archive_query": "Anderson Computational Fluid Dynamics textbook",
+    "domain": "CFD_advanced",
+    "index": 2
+  },
+  {
+    "title": "Schlichting Boundary Layer Theory",
+    "archive_query": "Schlichting Boundary Layer Theory aerodynamics",
+    "domain": "aerodynamics",
+    "index": 3
+  },
+  {
+    "title": "Abbott Von Doenhoff Theory of Wing Sections",
+    "archive_query": "Abbott Von Doenhoff Theory Wing Sections airfoil",
+    "domain": "aerodynamics",
+    "index": 4
+  },
+  {
+    "title": "Raymer Aircraft Design Conceptual Approach",
+    "archive_query": "Raymer Aircraft Design Conceptual Approach AIAA",
+    "domain": "aircraft_design",
+    "index": 5
+  },
+  {
+    "title": "Torenbeek Synthesis of Subsonic Airplane Design",
+    "archive_query": "Torenbeek Synthesis Subsonic Airplane Design",
+    "domain": "aircraft_design",
+    "index": 6
+  },
+  {
+    "title": "Megson Aircraft Structures for Engineering Students",
+    "archive_query": "Megson Aircraft Structures Engineering Students",
+    "domain": "aircraft_structures",
+    "index": 7
+  },
+  {
+    "title": "Bruhn Analysis Design Flight Vehicle Structures",
+    "archive_query": "Bruhn Analysis Design Flight Vehicle Structures",
+    "domain": "aircraft_structures",
+    "index": 8
+  },
+  {
+    "title": "Mattingly Elements of Propulsion Gas Turbines Rockets",
+    "archive_query": "Mattingly Elements Propulsion Gas Turbines Rockets",
+    "domain": "propulsion",
+    "index": 9
+  },
+  {
+    "title": "Sutton Rocket Propulsion Elements",
+    "archive_query": "Sutton Rocket Propulsion Elements textbook",
+    "domain": "propulsion",
+    "index": 10
+  },
+  {
+    "title": "Nicolai Fundamentals of Aircraft Design",
+    "archive_query": "Nicolai Fundamentals Aircraft Design METS",
+    "domain": "aircraft_design",
+    "index": 11
+  },
+  {
+    "title": "Bertin Aerodynamics for Engineers",
+    "archive_query": "Bertin Aerodynamics Engineers textbook",
+    "domain": "aerodynamics",
+    "index": 12
+  },
+  {
+    "title": "Katz Plotkin Low Speed Aerodynamics",
+    "archive_query": "Katz Plotkin Low Speed Aerodynamics",
+    "domain": "aerodynamics",
+    "index": 13
+  },
+  {
+    "title": "Houghton Carpenter Aerodynamics for Engineering Students",
+    "archive_query": "Houghton Carpenter Aerodynamics Engineering Students",
+    "domain": "aerodynamics",
+    "index": 14
+  },
+  {
+    "title": "Moran Introduction to Theoretical and Computational Aerodynamics",
+    "archive_query": "Moran Introduction Theoretical Computational Aerodynamics",
+    "domain": "aerodynamics",
+    "index": 15
+  },
+  {
+    "title": "Shapiro Dynamics and Thermodynamics Compressible Fluid Flow",
+    "archive_query": "Shapiro Dynamics Thermodynamics Compressible Fluid Flow",
+    "domain": "aerodynamics",
+    "index": 16
+  },
+  {
+    "title": "Cumpsty Compressor Aerodynamics",
+    "archive_query": "Cumpsty Compressor Aerodynamics textbook",
+    "domain": "propulsion",
+    "index": 17
+  },
+  {
+    "title": "Dixon Fluid Mechanics Thermodynamics Turbomachinery",
+    "archive_query": "Dixon Fluid Mechanics Thermodynamics Turbomachinery",
+    "domain": "propulsion",
+    "index": 18
+  },
+  {
+    "title": "Kermode Mechanics of Flight",
+    "archive_query": "Kermode Mechanics of Flight textbook",
+    "domain": "aircraft_design",
+    "index": 19
+  },
+  {
+    "title": "Etkin Reid Dynamics of Flight Stability Control",
+    "archive_query": "Etkin Reid Dynamics Flight Stability Control",
+    "domain": "aircraft_design",
+    "index": 20
+  },
+  {
+    "title": "Doebelin System Dynamics Modeling Analysis Simulation",
+    "archive_query": "Doebelin System Dynamics Modeling Analysis Simulation",
+    "domain": "aircraft_design",
+    "index": 21
+  },
+  {
+    "title": "Nelson Flight Stability and Automatic Control",
+    "archive_query": "Nelson Flight Stability Automatic Control",
+    "domain": "aircraft_design",
+    "index": 22
+  },
+  {
+    "title": "Niu Airframe Structural Design",
+    "archive_query": "Niu Airframe Structural Design practical",
+    "domain": "aircraft_structures",
+    "index": 23
+  },
+  {
+    "title": "Niu Composite Airframe Structures",
+    "archive_query": "Niu Composite Airframe Structures design",
+    "domain": "aircraft_structures",
+    "index": 24
+  },
+  {
+    "title": "White Fluid Mechanics",
+    "archive_query": "White Fluid Mechanics textbook engineering",
+    "domain": "fluid_mechanics",
+    "index": 25
+  },
+  {
+    "title": "Cengel Thermodynamics Engineering Approach",
+    "archive_query": "Cengel Boles Thermodynamics Engineering Approach",
+    "domain": "thermodynamics",
+    "index": 26
+  },
+  {
+    "title": "Incropera Fundamentals of Heat and Mass Transfer",
+    "archive_query": "Incropera Fundamentals Heat Mass Transfer textbook",
+    "domain": "thermodynamics",
+    "index": 27
+  },
+  {
+    "title": "Hibbeler Mechanics of Materials",
+    "archive_query": "Hibbeler Mechanics of Materials textbook",
+    "domain": "structures",
+    "index": 28
+  },
+  {
+    "title": "Cook Finite Element Analysis",
+    "archive_query": "Cook Concepts Finite Element Analysis",
+    "domain": "FEA",
+    "index": 29
+  },
+  {
+    "title": "Budynas Advanced Strength Applied Stress Analysis",
+    "archive_query": "Budynas Advanced Strength Applied Stress Analysis",
+    "domain": "structures",
+    "index": 30
+  },
+  {
+    "title": "Shigley Mechanical Engineering Design",
+    "archive_query": "Shigley Mechanical Engineering Design textbook",
+    "domain": "mechanical_design",
+    "index": 31
+  },
+  {
+    "title": "Norton Design of Machinery",
+    "archive_query": "Norton Design of Machinery mechanisms",
+    "domain": "mechanisms",
+    "index": 32
+  },
+  {
+    "title": "Juvinall Fundamentals Machine Component Design",
+    "archive_query": "Juvinall Marshek Fundamentals Machine Component Design",
+    "domain": "mechanical_design",
+    "index": 33
+  },
+  {
+    "title": "Ashby Materials Selection Mechanical Design",
+    "archive_query": "Ashby Materials Selection Mechanical Design",
+    "domain": "materials",
+    "index": 34
+  },
+  {
+    "title": "Callister Materials Science Engineering",
+    "archive_query": "Callister Materials Science Engineering Introduction",
+    "domain": "materials",
+    "index": 35
+  },
+  {
+    "title": "Turns Introduction to Combustion",
+    "archive_query": "Turns Introduction to Combustion concepts applications",
+    "domain": "combustion",
+    "index": 36
+  },
+  {
+    "title": "Timoshenko Theory of Elasticity",
+    "archive_query": "Timoshenko Goodier Theory of Elasticity",
+    "domain": "structures",
+    "index": 37
+  },
+  {
+    "title": "Timoshenko Theory of Plates and Shells",
+    "archive_query": "Timoshenko Woinowsky Theory Plates Shells",
+    "domain": "structures",
+    "index": 38
+  },
+  {
+    "title": "Ugural Mechanics of Materials",
+    "archive_query": "Ugural Mechanics Materials Modern Approach",
+    "domain": "structures",
+    "index": 39
+  },
+  {
+    "title": "Crandall Dahl Lardner Introduction Mechanics Solids",
+    "archive_query": "Crandall Dahl Lardner Introduction Mechanics Solids",
+    "domain": "structures",
+    "index": 40
+  },
+  {
+    "title": "Reddy Introduction Finite Element Method",
+    "archive_query": "Reddy Introduction Finite Element Method textbook",
+    "domain": "FEA",
+    "index": 41
+  },
+  {
+    "title": "Bathe Finite Element Procedures",
+    "archive_query": "Bathe Finite Element Procedures engineering",
+    "domain": "FEA",
+    "index": 42
+  },
+  {
+    "title": "Hamrock Schmid Jacobson Fundamentals Machine Elements",
+    "archive_query": "Hamrock Schmid Jacobson Fundamentals Machine Elements",
+    "domain": "mechanical_design",
+    "index": 43
+  },
+  {
+    "title": "Holman Heat Transfer",
+    "archive_query": "Holman Heat Transfer textbook engineering",
+    "domain": "thermodynamics",
+    "index": 44
+  },
+  {
+    "title": "Munson Young Okiishi Fundamentals Fluid Mechanics",
+    "archive_query": "Munson Young Okiishi Fundamentals Fluid Mechanics",
+    "domain": "fluid_mechanics",
+    "index": 45
+  },
+  {
+    "title": "Siciliano Robotics Modelling Planning Control",
+    "archive_query": "Siciliano Robotics Modelling Planning Control",
+    "domain": "robotics",
+    "index": 46
+  },
+  {
+    "title": "Spong Robot Modeling and Control",
+    "archive_query": "Spong Robot Modeling Control textbook",
+    "domain": "robotics",
+    "index": 47
+  },
+  {
+    "title": "Craig Introduction to Robotics Mechanics Control",
+    "archive_query": "Craig Introduction Robotics Mechanics Control",
+    "domain": "robotics",
+    "index": 48
+  },
+  {
+    "title": "Thrun Probabilistic Robotics",
+    "archive_query": "Thrun Probabilistic Robotics textbook",
+    "domain": "robotics",
+    "index": 49
+  },
+  {
+    "title": "Lynch Park Modern Robotics Mechanics Planning Control",
+    "archive_query": "Lynch Park Modern Robotics Mechanics Planning Control",
+    "domain": "robotics",
+    "index": 50
+  },
+  {
+    "title": "Niku Introduction to Robotics Analysis Control Applications",
+    "archive_query": "Niku Introduction Robotics Analysis Control Applications",
+    "domain": "robotics",
+    "index": 51
+  },
+  {
+    "title": "Corke Robotics Vision Control",
+    "archive_query": "Corke Robotics Vision Control fundamental algorithms",
+    "domain": "robotics",
+    "index": 52
+  },
+  {
+    "title": "Groover Automation Production Systems Computer Integrated Manufacturing",
+    "archive_query": "Groover Automation Production Systems Computer Integrated Manufacturing",
+    "domain": "robotics",
+    "index": 53
+  },
+  {
+    "title": "Mason Mechanics of Robotic Manipulation",
+    "archive_query": "Mason Mechanics Robotic Manipulation MIT",
+    "domain": "robotics",
+    "index": 54
+  },
+  {
+    "title": "Benyus Biomimicry Innovation Inspired by Nature",
+    "archive_query": "Benyus Biomimicry Innovation Inspired Nature",
+    "domain": "biomimicry",
+    "index": 55
+  },
+  {
+    "title": "Vogel Cats Paws and Catapults Mechanical Worlds",
+    "archive_query": "Vogel Cats Paws Catapults Mechanical Worlds Animals Machines",
+    "domain": "biomimicry",
+    "index": 56
+  },
+  {
+    "title": "Vincent Structural Biomaterials",
+    "archive_query": "Vincent Structural Biomaterials textbook",
+    "domain": "biomimicry",
+    "index": 57
+  },
+  {
+    "title": "Vogel Comparative Biomechanics Life Physical World",
+    "archive_query": "Vogel Comparative Biomechanics Life Physical World",
+    "domain": "biomimicry",
+    "index": 58
+  },
+  {
+    "title": "Forbes Gecko Foot Bio-inspiration Engineering",
+    "archive_query": "Forbes Gecko Foot Bio-inspiration Engineering New Materials",
+    "domain": "biomimicry",
+    "index": 59
+  },
+  {
+    "title": "Nachtigall Bionik Grundlagen und Beispiele",
+    "archive_query": "Nachtigall Bionik technical biology biomimetics",
+    "domain": "biomimicry",
+    "index": 60
+  },
+  {
+    "title": "Bar-Cohen Biomimetics Biologically Inspired Technologies",
+    "archive_query": "Bar-Cohen Biomimetics Biologically Inspired Technologies",
+    "domain": "biomimicry",
+    "index": 61
+  },
+  {
+    "title": "Yoseph Bar-Cohen Electroactive Polymer Actuators Biomimetic",
+    "archive_query": "Bar-Cohen Electroactive Polymer Actuators Biomimetic",
+    "domain": "biomimicry",
+    "index": 62
+  },
+  {
+    "title": "Ball Fundamentals Aircraft Combat Survivability",
+    "archive_query": "Ball Fundamentals Aircraft Combat Survivability Analysis Design",
+    "domain": "military_aerospace",
+    "index": 63
+  },
+  {
+    "title": "Fleeman Tactical Missile Design",
+    "archive_query": "Fleeman Tactical Missile Design AIAA",
+    "domain": "military_aerospace",
+    "index": 64
+  },
+  {
+    "title": "Carlucci Ballistics Theory Design Guns Ammunition",
+    "archive_query": "Carlucci Jacobson Ballistics Theory Design Guns Ammunition",
+    "domain": "ballistics",
+    "index": 65
+  },
+  {
+    "title": "Siouris Missile Guidance and Control Systems",
+    "archive_query": "Siouris Missile Guidance Control Systems",
+    "domain": "military_aerospace",
+    "index": 66
+  },
+  {
+    "title": "Przemieniecki Mathematical Methods Defense Analyses",
+    "archive_query": "Przemieniecki Mathematical Methods Defense Analyses AIAA",
+    "domain": "military_systems",
+    "index": 67
+  },
+  {
+    "title": "Isakowitz International Reference Guide Space Launch Systems",
+    "archive_query": "Isakowitz International Reference Guide Space Launch Systems",
+    "domain": "military_aerospace",
+    "index": 68
+  },
+  {
+    "title": "Laur Llanso Encyclopedia Modern US Military Weapons",
+    "archive_query": "Laur Llanso Encyclopedia Modern US Military Weapons",
+    "domain": "military_systems",
+    "index": 69
+  },
+  {
+    "title": "Kopp Carlo Air Power Australia Defence Analysis",
+    "archive_query": "Kopp Air Power stealth radar electronic warfare",
+    "domain": "military_aerospace",
+    "index": 70
+  },
+  {
+    "title": "Schleher Electronic Warfare Modern Battlefield",
+    "archive_query": "Schleher Electronic Warfare Modern Battlefield",
+    "domain": "military_systems",
+    "index": 71
+  },
+  {
+    "title": "Mahafza Radar Systems Analysis Design",
+    "archive_query": "Mahafza Radar Systems Analysis Design MATLAB",
+    "domain": "military_systems",
+    "index": 72
+  },
+  {
+    "title": "Stimson Introduction Airborne Radar",
+    "archive_query": "Stimson Introduction Airborne Radar",
+    "domain": "military_systems",
+    "index": 73
+  },
+  {
+    "title": "Goodfellow Deep Learning",
+    "archive_query": "Goodfellow Bengio Courville Deep Learning textbook",
+    "domain": "AI",
+    "index": 74
+  },
+  {
+    "title": "Russell Norvig Artificial Intelligence Modern Approach",
+    "archive_query": "Russell Norvig Artificial Intelligence Modern Approach",
+    "domain": "AI",
+    "index": 75
+  },
+  {
+    "title": "Sutton Barto Reinforcement Learning Introduction",
+    "archive_query": "Sutton Barto Reinforcement Learning Introduction",
+    "domain": "AI",
+    "index": 76
+  },
+  {
+    "title": "Murphy Machine Learning Probabilistic Perspective",
+    "archive_query": "Murphy Machine Learning Probabilistic Perspective",
+    "domain": "AI",
+    "index": 77
+  },
+  {
+    "title": "Bishop Pattern Recognition Machine Learning",
+    "archive_query": "Bishop Pattern Recognition Machine Learning",
+    "domain": "AI",
+    "index": 78
+  },
+  {
+    "title": "Hastie Tibshirani Friedman Elements Statistical Learning",
+    "archive_query": "Hastie Tibshirani Friedman Elements Statistical Learning",
+    "domain": "AI",
+    "index": 79
+  },
+  {
+    "title": "Vaswani Attention Is All You Need Transformers",
+    "archive_query": "attention is all you need transformer neural network",
+    "domain": "AI",
+    "index": 80
+  },
+  {
+    "title": "LeCun Bengio Hinton Deep Learning Nature Review",
+    "archive_query": "LeCun Bengio Hinton deep learning review",
+    "domain": "AI",
+    "index": 81
+  },
+  {
+    "title": "Cormen Introduction to Algorithms",
+    "archive_query": "Cormen Leiserson Rivest Stein Introduction Algorithms",
+    "domain": "coding",
+    "index": 82
+  },
+  {
+    "title": "Press Numerical Recipes Scientific Computing",
+    "archive_query": "Press Numerical Recipes Scientific Computing",
+    "domain": "coding",
+    "index": 83
+  },
+  {
+    "title": "Martin Clean Code Handbook Agile Software",
+    "archive_query": "Martin Clean Code Handbook Agile Software Craftsmanship",
+    "domain": "coding",
+    "index": 84
+  },
+  {
+    "title": "Sedgewick Algorithms Fourth Edition",
+    "archive_query": "Sedgewick Wayne Algorithms Fourth Edition",
+    "domain": "coding",
+    "index": 85
+  },
+  {
+    "title": "Langtangen Programming for Computations Python",
+    "archive_query": "Langtangen Programming Computations Python Scientific",
+    "domain": "coding",
+    "index": 86
+  },
+  {
+    "title": "Vanderplas Python Data Science Handbook",
+    "archive_query": "Vanderplas Python Data Science Handbook",
+    "domain": "coding",
+    "index": 87
+  },
+  {
+    "title": "Trefethen Bau Numerical Linear Algebra",
+    "archive_query": "Trefethen Bau Numerical Linear Algebra SIAM",
+    "domain": "coding",
+    "index": 88
+  },
+  {
+    "title": "Strang Introduction Linear Algebra",
+    "archive_query": "Strang Introduction Linear Algebra textbook",
+    "domain": "coding",
+    "index": 89
+  },
+  {
+    "title": "Knuth Art of Computer Programming",
+    "archive_query": "Knuth Art Computer Programming volume",
+    "domain": "coding",
+    "index": 90
+  },
+  {
+    "title": "Gamma Design Patterns Elements Reusable Software",
+    "archive_query": "Gamma Helm Johnson Vlissides Design Patterns Elements Reusable Software",
+    "domain": "coding",
+    "index": 91
+  },
+  {
+    "title": "Quarteroni Numerical Mathematics",
+    "archive_query": "Quarteroni Sacco Saleri Numerical Mathematics",
+    "domain": "coding",
+    "index": 92
+  },
+  {
+    "title": "Chapra Canale Numerical Methods Engineers",
+    "archive_query": "Chapra Canale Numerical Methods Engineers",
+    "domain": "coding",
+    "index": 93
+  },
+  {
+    "title": "Ferziger Peric Computational Methods Fluid Dynamics",
+    "archive_query": "Ferziger Peric Computational Methods Fluid Dynamics",
+    "domain": "CFD",
+    "index": 94
+  },
+  {
+    "title": "Blazek Computational Fluid Dynamics Principles Applications",
+    "archive_query": "Blazek Computational Fluid Dynamics Principles Applications",
+    "domain": "CFD",
+    "index": 95
+  },
+  {
+    "title": "Hirsch Numerical Computation Internal External Flows",
+    "archive_query": "Hirsch Numerical Computation Internal External Flows",
+    "domain": "CFD",
+    "index": 96
+  },
+  {
+    "title": "Wendt Computational Fluid Dynamics Introduction",
+    "archive_query": "Wendt Computational Fluid Dynamics Introduction textbook",
+    "domain": "CFD",
+    "index": 97
+  },
+  {
+    "title": "Chung Computational Fluid Dynamics",
+    "archive_query": "Chung Computational Fluid Dynamics Cambridge",
+    "domain": "CFD",
+    "index": 98
+  },
+  {
+    "title": "Pope Turbulent Flows",
+    "archive_query": "Pope Turbulent Flows Cambridge textbook",
+    "domain": "CFD",
+    "index": 99
+  }
+]
