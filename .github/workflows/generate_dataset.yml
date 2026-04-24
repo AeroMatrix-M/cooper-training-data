@@ -1,1 +1,43 @@
+name: Generate Cooper Training Data
 
+on:
+  workflow_dispatch:
+    inputs:
+      book_index:
+        description: 'Book index to process (0-99)'
+        required: true
+        default: '0'
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests pymupdf google-generativeai
+
+      - name: Run processing script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python scripts/download_and_process.py \
+            --book-index ${{ github.event.inputs.book_index }}
+
+      - name: Commit output to repo
+        run: |
+          git config user.email "cooper-bot@aeromatrix.com"
+          git config user.name "Cooper Training Bot"
+          git add dataset/
+          git diff --staged --quiet || git commit -m \
+            "Training data: book ${{ github.event.inputs.book_index }}"
+          git push
