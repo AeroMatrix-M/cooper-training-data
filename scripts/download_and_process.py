@@ -4,24 +4,28 @@ import json
 import os
 import argparse
 import time
-import google.generativeai as genai
+from google import genai
 
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-gemini = genai.GenerativeModel("gemini-1.5-pro")
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 # ── Archive.org ───────────────────────────────────────────────
 
 def search_archive(query):
-    r = requests.get("https://archive.org/advancedsearch.php", params={
-        "q": f"{query}",
-        "fl[]": ["identifier", "title", "creator"],
-        "mediatype": "texts",
-        "sort[]": "downloads desc",
-        "rows": 3,
-        "output": "json"
-    })
-    docs = r.json()["response"]["docs"]
-    return docs[0]["identifier"] if docs else None
+    try:
+        r = requests.get("https://archive.org/advancedsearch.php", params={
+            "q": query,
+            "fl[]": ["identifier", "title"],
+            "mediatype": "texts",
+            "sort[]": "downloads desc",
+            "rows": 5,
+            "output": "json"
+        }, timeout=30)
+        data = r.json()
+        docs = data.get("response", {}).get("docs", [])
+        return docs[0]["identifier"] if docs else None
+    except Exception as e:
+        print(f"Archive search error: {e}")
+        return None
 
 def download_pdf(identifier, save_path="/tmp/book.pdf"):
     meta = requests.get(f"https://archive.org/metadata/{identifier}").json()
@@ -81,7 +85,7 @@ Textbook excerpt:
 {chunk[:7000]}
 """
     try:
-        response = gemini.generate_content(prompt)
+        response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
         text = response.text.strip()
         if "```" in text:
             text = text.split("```")[1]
