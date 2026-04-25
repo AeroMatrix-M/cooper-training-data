@@ -27,7 +27,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests pymupdf google-genai
+          pip install requests pymupdf openai
 
       - name: Run processing script
         env:
