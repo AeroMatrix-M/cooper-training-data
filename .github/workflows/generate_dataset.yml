@@ -31,7 +31,12 @@ jobs:
 
       - name: Run processing script
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          - name: Run processing script
+        env:
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        run: |
+          python scripts/download_and_process.py \
+            --book-index ${{ github.event.inputs.book_index }}
         run: |
           python scripts/download_and_process.py \
             --book-index ${{ github.event.inputs.book_index }}
