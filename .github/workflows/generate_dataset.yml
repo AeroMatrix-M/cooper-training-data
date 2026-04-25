@@ -7,7 +7,7 @@ on:
         description: 'Book index to process (0-99)'
         required: true
         default: '0'
-        
+
 permissions:
   contents: write
 
@@ -26,17 +26,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install requests pymupdf openai
+        run: pip install requests pymupdf openai
 
       - name: Run processing script
         env:
-          - name: Run processing script
-        env:
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-        run: |
-          python scripts/download_and_process.py \
-            --book-index ${{ github.event.inputs.book_index }}
         run: |
           python scripts/download_and_process.py \
             --book-index ${{ github.event.inputs.book_index }}
