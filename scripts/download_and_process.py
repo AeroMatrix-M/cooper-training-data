@@ -5,14 +5,18 @@ import os
 import argparse
 import time
 import xml.etree.ElementTree as ET
-from google import genai
+from openai import OpenAI
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+client = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=os.environ["NVIDIA_API_KEY"]
+)
+
+MODEL = "deepseek-ai/deepseek-v3.2"
 
 # ── ArXiv ─────────────────────────────────────────────────────
 
 def search_arxiv(query, max_results=5):
-    """Search ArXiv and return list of (id, title, pdf_url)"""
     try:
         r = requests.get("https://export.arxiv.org/api/query", params={
             "search_query": f"all:{query}",
@@ -55,7 +59,6 @@ def download_pdf(pdf_url, save_path="/tmp/paper.pdf"):
 # ── Text extraction ───────────────────────────────────────────
 
 def extract_text_chunks(pdf_path, chunk_pages=8):
-    """Extract text in chunks — papers are shorter than books"""
     try:
         doc = fitz.open(pdf_path)
         print(f"Total pages: {len(doc)}")
@@ -72,11 +75,39 @@ def extract_text_chunks(pdf_path, chunk_pages=8):
         print(f"Extraction error: {e}")
         return []
 
-# ── Gemini SFT Q&A generation ─────────────────────────────────
+# ── DeepSeek call with thinking mode ─────────────────────────
+
+def call_deepseek(prompt):
+    """Call DeepSeek V3.2 with thinking enabled, return (thinking, response) tuple"""
+    try:
+        completion = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            top_p=0.95,
+            max_tokens=8192,
+            extra_body={"chat_template_kwargs": {"thinking": True}},
+            stream=True
+        )
+        thinking_text = ""
+        response_text = ""
+        for chunk in completion:
+            if not getattr(chunk, "choices", None):
+                continue
+            reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+            if reasoning:
+                thinking_text += reasoning
+            if chunk.choices[0].delta.content is not None:
+                response_text += chunk.choices[0].delta.content
+        return thinking_text.strip(), response_text.strip()
+    except Exception as e:
+        print(f"  DeepSeek error: {e}")
+        return "", ""
+
+# ── SFT Q&A generation ────────────────────────────────────────
 
 def chunk_to_qa(chunk, domain, paper_title):
-    prompt = f"""
-You are generating training data for Cooper, a senior physical engineering reasoning AI.
+    prompt = f"""You are generating training data for Cooper, a senior physical engineering reasoning AI.
 
 This excerpt is from a recent research paper: "{paper_title}"
 
@@ -86,49 +117,51 @@ STRICT RULES:
 - Questions must be specific and technical — no vague questions
 - Thinking must show full first-principles reasoning — identify physics, apply equations, show working, check units
 - Response must read like a senior engineer — precise, numbered steps, values with units
-- Include at least 3 cross-domain examples per batch — where this concept appears in another engineering field
-- Focus on the novel research insights — what does this paper contribute beyond textbook knowledge
+- Include at least 3 cross-domain examples — where this concept appears in another engineering field
+- Focus on novel research insights — what does this paper contribute beyond textbook knowledge
 
 Return ONLY a valid JSON array. No markdown. No preamble. Schema:
 [{{
   "prompt": "specific technical engineering question",
-  "thinking": "1. State the physical problem\\n2. Identify relevant domains that have solved this\\n3. List first principles and equations\\n4. Full step by step working with values\\n5. Sanity check the answer",
+  "thinking": "1. State the physical problem\\n2. Identify relevant domains\\n3. List first principles and equations\\n4. Full step by step working with values\\n5. Sanity check",
   "response": "precise engineering answer with equations, numbers, units and domain references",
   "domain": "{domain}",
   "cross_domain": true
 }}]
 
 Paper excerpt:
-{chunk[:7000]}
-"""
+{chunk[:7000]}"""
+
+    thinking, response = call_deepseek(prompt)
+    if not response:
+        return []
     try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
-        text = response.text.strip()
+        text = response.strip()
         if "```" in text:
             text = text.split("```")[1]
             if text.startswith("json"):
                 text = text[4:]
-        return json.loads(text)
+        records = json.loads(text)
+        # Inject DeepSeek's actual thinking into the training records
+        for r in records:
+            if not r.get("thinking"):
+                r["thinking"] = thinking[:2000] if thinking else ""
+        return records
     except Exception as e:
-        print(f"  Gemini Q&A error: {e}")
+        print(f"  Q&A parse error: {e}")
         return []
 
-# ── Gemini DPO preference generation ─────────────────────────
+# ── DPO preference generation ─────────────────────────────────
 
 def chunk_to_dpo(chunk, domain, paper_title):
-    prompt = f"""
-You are generating DPO preference training data for Cooper, a senior engineering reasoning AI.
+    prompt = f"""You are generating DPO preference training data for Cooper, a senior engineering reasoning AI.
 
 This excerpt is from a recent research paper: "{paper_title}"
 
 From this excerpt generate exactly 8 preference pairs.
 
-Each pair needs:
-- chosen: how a senior engineer with 20 years experience would answer — deep physics, cross-domain awareness, first principles, specific numbers, references the novel research contribution
-- rejected: how a junior engineer would answer — correct but shallow, generic, missing physics depth, no cross-domain awareness
+- chosen: senior engineer, 20 years experience — deep physics, cross-domain, first principles, specific numbers, references novel research
+- rejected: junior engineer — correct but shallow, generic, missing physics depth
 
 Return ONLY a valid JSON array. No markdown. No preamble. Schema:
 [{{
@@ -139,21 +172,20 @@ Return ONLY a valid JSON array. No markdown. No preamble. Schema:
 }}]
 
 Paper excerpt:
-{chunk[:7000]}
-"""
+{chunk[:7000]}"""
+
+    _, response = call_deepseek(prompt)
+    if not response:
+        return []
     try:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
-        )
-        text = response.text.strip()
+        text = response.strip()
         if "```" in text:
             text = text.split("```")[1]
             if text.startswith("json"):
                 text = text[4:]
         return json.loads(text)
     except Exception as e:
-        print(f"  Gemini DPO error: {e}")
+        print(f"  DPO parse error: {e}")
         return []
 
 # ── Main ──────────────────────────────────────────────────────
@@ -172,7 +204,6 @@ def main():
     print(f"Domain: {book['domain']}")
     print(f"{'='*50}\n")
 
-    # Search ArXiv for top papers matching this query
     papers = search_arxiv(book["arxiv_query"], max_results=5)
     if not papers:
         print("ERROR: No papers found on ArXiv")
@@ -201,15 +232,17 @@ def main():
             print(f"  Q&A chunk {i+1}/{len(chunks)}")
             qa = chunk_to_qa(chunk, book["domain"], title)
             all_qa.extend(qa)
+            print(f"    → {len(qa)} records")
 
             print(f"  DPO chunk {i+1}/{len(chunks)}")
             dpo = chunk_to_dpo(chunk, book["domain"], title)
             all_dpo.extend(dpo)
+            print(f"    → {len(dpo)} pairs")
 
-            time.sleep(2)  # Gemini rate limit
+            time.sleep(2)
 
         os.remove("/tmp/paper.pdf")
-        time.sleep(3)  # ArXiv rate limit
+        time.sleep(3)
 
     # Save SFT JSONL
     os.makedirs("dataset/qa_jsonl", exist_ok=True)
