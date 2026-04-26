@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       book_index:
-        description: 'Book index to process (0-99)'
+        description: 'Book index to process (0-174)'
         required: true
         default: '0'
 
@@ -30,6 +30,7 @@ jobs:
 
       - name: Run processing script
         env:
+          SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
         run: |
           python scripts/download_and_process.py \
