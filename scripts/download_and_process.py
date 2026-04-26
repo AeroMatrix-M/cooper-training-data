@@ -36,10 +36,32 @@ def fetch_arxiv_direct(arxiv_id):
             return []
         title = entry.find("atom:title", ns).text.strip()
         pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
-        print(f"ArXiv: {title}")
+        print(f"ArXiv direct: {title}")
         return [(title, pdf_url)]
     except Exception as e:
-        print(f"ArXiv error: {e}")
+        print(f"ArXiv direct error: {e}")
+        return []
+
+def fetch_arxiv_search(query, max_results=5):
+    try:
+        r = requests.get("https://export.arxiv.org/api/query", params={
+            "search_query": f"all:{query}",
+            "start": 0,
+            "max_results": max_results,
+            "sortBy": "relevance"
+        }, timeout=30)
+        root = ET.fromstring(r.content)
+        ns = {"atom": "http://www.w3.org/2005/Atom"}
+        results = []
+        for entry in root.findall("atom:entry", ns):
+            arxiv_id = entry.find("atom:id", ns).text.split("/abs/")[-1]
+            title = entry.find("atom:title", ns).text.strip()
+            pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
+            results.append((title, pdf_url))
+        print(f"ArXiv search fallback: {len(results)} papers")
+        return results
+    except Exception as e:
+        print(f"ArXiv search error: {e}")
         return []
 
 def fetch_semantic_scholar(query, min_citations=100):
@@ -49,7 +71,7 @@ def fetch_semantic_scholar(query, min_citations=100):
             params={
                 "query": query,
                 "limit": 20,
-                "fields": "title,citationCount,openAccessPdf,year"
+                "fields": "title,citationCount,openAccessPdf,externalIds,year"
             },
             headers={"User-Agent": "CooperTraining/1.0"},
             timeout=30
@@ -59,22 +81,40 @@ def fetch_semantic_scholar(query, min_citations=100):
         for p in papers:
             citations = p.get("citationCount", 0)
             pdf_info = p.get("openAccessPdf")
-            if citations >= min_citations and pdf_info and pdf_info.get("url"):
+            ext_ids = p.get("externalIds", {})
+            arxiv_id = ext_ids.get("ArXiv")
+
+            # Use open access PDF or ArXiv ID fallback
+            pdf_url = None
+            if pdf_info and pdf_info.get("url"):
+                pdf_url = pdf_info["url"]
+            elif arxiv_id:
+                pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
+
+            if citations >= min_citations and pdf_url:
                 qualified.append({
                     "title": p["title"],
                     "citations": citations,
-                    "pdf_url": pdf_info["url"],
+                    "pdf_url": pdf_url,
                     "year": p.get("year", "?")
                 })
+
         qualified.sort(key=lambda x: x["citations"], reverse=True)
         top = qualified[:5]
-        print(f"Semantic Scholar: {len(papers)} found, {len(top)} qualified (>{min_citations} citations, open access)")
+        print(f"Semantic Scholar: {len(papers)} found, {len(top)} qualified (>{min_citations} citations)")
         for p in top:
             print(f"  [{p['citations']} citations, {p['year']}] {p['title'][:70]}")
+
+        # ArXiv fallback if nothing qualified
+        if not top:
+            print("No qualified papers found — falling back to ArXiv search")
+            return fetch_arxiv_search(query)
+
         return [(p["title"], p["pdf_url"]) for p in top]
+
     except Exception as e:
-        print(f"Semantic Scholar error: {e}")
-        return []
+        print(f"Semantic Scholar error: {e} — falling back to ArXiv")
+        return fetch_arxiv_search(query)
 
 def fetch_nasa_ntrs(query):
     try:
@@ -93,10 +133,16 @@ def fetch_nasa_ntrs(query):
         print(f"NASA NTRS: {len(papers)} reports found")
         for t, _ in papers:
             print(f"  {t[:70]}")
+
+        # ArXiv fallback if nothing
+        if not papers:
+            print("No NASA reports found — falling back to ArXiv search")
+            return fetch_arxiv_search(query)
+
         return papers
     except Exception as e:
-        print(f"NASA NTRS error: {e}")
-        return []
+        print(f"NASA NTRS error: {e} — falling back to ArXiv")
+        return fetch_arxiv_search(query)
 
 # ── PDF download and extraction ───────────────────────────────
 
@@ -150,6 +196,7 @@ def call_llm(prompt):
         return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"  SambaNova error: {e} — trying NVIDIA")
+
     try:
         completion = nvidia_client.chat.completions.create(
             model=NVIDIA_MODEL,
@@ -285,7 +332,7 @@ def main():
     print(f"Problem: {problem}")
     print(f"{'='*55}\n")
 
-    # Fetch papers
+    # Fetch papers based on source type
     if source == "arxiv":
         papers = fetch_arxiv_direct(book["arxiv_id"])
     elif source == "semantic_scholar":
@@ -300,7 +347,7 @@ def main():
         return
 
     if not papers:
-        print("ERROR: No papers fetched")
+        print("ERROR: All sources exhausted — no papers fetched")
         return
 
     all_qa = []
@@ -309,10 +356,11 @@ def main():
     for title, pdf_url in papers:
         print(f"\n--- {title[:70]}")
         if not download_pdf(pdf_url):
-            print("Skipping")
+            print("Skipping — download failed")
             continue
         chunks = extract_text_chunks("/tmp/paper.pdf")
         if not chunks:
+            print("Skipping — no text extracted")
             os.remove("/tmp/paper.pdf")
             continue
         for i, chunk in enumerate(chunks):
@@ -331,14 +379,14 @@ def main():
     os.makedirs("dataset/qa_jsonl", exist_ok=True)
     qa_path = f"dataset/qa_jsonl/{book['domain']}_{args.book_index}.jsonl"
     with open(qa_path, "w") as f:
-        for r in all_qa:
-            f.write(json.dumps(r) + "\n")
+        for record in all_qa:
+            f.write(json.dumps(record) + "\n")
 
     os.makedirs("dataset/dpo_jsonl", exist_ok=True)
     dpo_path = f"dataset/dpo_jsonl/{book['domain']}_{args.book_index}.jsonl"
     with open(dpo_path, "w") as f:
-        for r in all_dpo:
-            f.write(json.dumps(r) + "\n")
+        for record in all_dpo:
+            f.write(json.dumps(record) + "\n")
 
     print(f"\nQ&A: {len(all_qa)} → {qa_path}")
     print(f"DPO: {len(all_dpo)} → {dpo_path}")
