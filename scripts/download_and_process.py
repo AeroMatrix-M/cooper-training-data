@@ -1,5 +1,5 @@
 import requests
-import fitz  # pymupdf
+import fitz
 import json
 import os
 import argparse
@@ -7,36 +7,98 @@ import time
 import xml.etree.ElementTree as ET
 from openai import OpenAI
 
-client = OpenAI(
+# SambaNova primary
+sambanova_client = OpenAI(
+    base_url="https://api.sambanova.ai/v1",
+    api_key=os.environ["SAMBANOVA_API_KEY"]
+)
+
+# NVIDIA NIM fallback
+nvidia_client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key=os.environ["NVIDIA_API_KEY"]
 )
 
-MODEL = "deepseek-ai/deepseek-v3.2"
+SAMBANOVA_MODEL = "Meta-Llama-3.3-70B-Instruct"
+NVIDIA_MODEL = "deepseek-ai/deepseek-v3.2"
 
-# ── ArXiv ─────────────────────────────────────────────────────
+# ── Source fetchers ───────────────────────────────────────────
 
-def search_arxiv(query, max_results=5):
+def fetch_arxiv_direct(arxiv_id):
     try:
         r = requests.get("https://export.arxiv.org/api/query", params={
-            "search_query": f"all:{query}",
-            "start": 0,
-            "max_results": max_results,
-            "sortBy": "relevance",
-            "sortOrder": "descending"
+            "id_list": arxiv_id, "max_results": 1
         }, timeout=30)
         root = ET.fromstring(r.content)
         ns = {"atom": "http://www.w3.org/2005/Atom"}
-        entries = []
-        for entry in root.findall("atom:entry", ns):
-            arxiv_id = entry.find("atom:id", ns).text.split("/abs/")[-1]
-            title = entry.find("atom:title", ns).text.strip()
-            pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
-            entries.append((arxiv_id, title, pdf_url))
-        return entries
+        entry = root.find("atom:entry", ns)
+        if entry is None:
+            return []
+        title = entry.find("atom:title", ns).text.strip()
+        pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
+        print(f"ArXiv: {title}")
+        return [(title, pdf_url)]
     except Exception as e:
-        print(f"ArXiv search error: {e}")
+        print(f"ArXiv error: {e}")
         return []
+
+def fetch_semantic_scholar(query, min_citations=100):
+    try:
+        r = requests.get(
+            "https://api.semanticscholar.org/graph/v1/paper/search",
+            params={
+                "query": query,
+                "limit": 20,
+                "fields": "title,citationCount,openAccessPdf,year"
+            },
+            headers={"User-Agent": "CooperTraining/1.0"},
+            timeout=30
+        )
+        papers = r.json().get("data", [])
+        qualified = []
+        for p in papers:
+            citations = p.get("citationCount", 0)
+            pdf_info = p.get("openAccessPdf")
+            if citations >= min_citations and pdf_info and pdf_info.get("url"):
+                qualified.append({
+                    "title": p["title"],
+                    "citations": citations,
+                    "pdf_url": pdf_info["url"],
+                    "year": p.get("year", "?")
+                })
+        qualified.sort(key=lambda x: x["citations"], reverse=True)
+        top = qualified[:5]
+        print(f"Semantic Scholar: {len(papers)} found, {len(top)} qualified (>{min_citations} citations, open access)")
+        for p in top:
+            print(f"  [{p['citations']} citations, {p['year']}] {p['title'][:70]}")
+        return [(p["title"], p["pdf_url"]) for p in top]
+    except Exception as e:
+        print(f"Semantic Scholar error: {e}")
+        return []
+
+def fetch_nasa_ntrs(query):
+    try:
+        r = requests.get(
+            "https://ntrs.nasa.gov/api/citations/search",
+            params={"keyword": query, "rows": 5, "start": 0},
+            timeout=30
+        )
+        results = r.json().get("results", [])
+        papers = []
+        for item in results:
+            doc_id = item.get("id")
+            title = item.get("title", "NASA Report")
+            pdf_url = f"https://ntrs.nasa.gov/api/citations/{doc_id}/downloads/legacy"
+            papers.append((title, pdf_url))
+        print(f"NASA NTRS: {len(papers)} reports found")
+        for t, _ in papers:
+            print(f"  {t[:70]}")
+        return papers
+    except Exception as e:
+        print(f"NASA NTRS error: {e}")
+        return []
+
+# ── PDF download and extraction ───────────────────────────────
 
 def download_pdf(pdf_url, save_path="/tmp/paper.pdf"):
     try:
@@ -47,21 +109,21 @@ def download_pdf(pdf_url, save_path="/tmp/paper.pdf"):
                 for chunk in r.iter_content(8192):
                     f.write(chunk)
             size_mb = os.path.getsize(save_path) / 1024 / 1024
+            if size_mb < 0.05:
+                print(f"File too small ({size_mb:.2f}MB) — skipping")
+                return False
             print(f"Downloaded: {size_mb:.1f} MB")
             return True
-        else:
-            print(f"Download failed: HTTP {r.status_code}")
-            return False
+        print(f"Download failed: HTTP {r.status_code}")
+        return False
     except Exception as e:
         print(f"Download error: {e}")
         return False
 
-# ── Text extraction ───────────────────────────────────────────
-
 def extract_text_chunks(pdf_path, chunk_pages=8):
     try:
         doc = fitz.open(pdf_path)
-        print(f"Total pages: {len(doc)}")
+        print(f"Pages: {len(doc)}")
         chunks = []
         for i in range(0, len(doc), chunk_pages):
             text = ""
@@ -69,19 +131,28 @@ def extract_text_chunks(pdf_path, chunk_pages=8):
                 text += doc[p].get_text()
             if len(text.strip()) > 300:
                 chunks.append(text)
-        print(f"Usable chunks: {len(chunks)}")
+        print(f"Chunks: {len(chunks)}")
         return chunks
     except Exception as e:
         print(f"Extraction error: {e}")
         return []
 
-# ── DeepSeek call with thinking mode ─────────────────────────
+# ── LLM call SambaNova primary NVIDIA fallback ────────────────
 
-def call_deepseek(prompt):
-    """Call DeepSeek V3.2 with thinking enabled, return (thinking, response) tuple"""
+def call_llm(prompt):
     try:
-        completion = client.chat.completions.create(
-            model=MODEL,
+        response = sambanova_client.chat.completions.create(
+            model=SAMBANOVA_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=8192
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"  SambaNova error: {e} — trying NVIDIA")
+    try:
+        completion = nvidia_client.chat.completions.create(
+            model=NVIDIA_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7,
             top_p=0.95,
@@ -89,50 +160,52 @@ def call_deepseek(prompt):
             extra_body={"chat_template_kwargs": {"thinking": True}},
             stream=True
         )
-        thinking_text = ""
-        response_text = ""
+        text = ""
         for chunk in completion:
             if not getattr(chunk, "choices", None):
                 continue
-            reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
-            if reasoning:
-                thinking_text += reasoning
             if chunk.choices[0].delta.content is not None:
-                response_text += chunk.choices[0].delta.content
-        return thinking_text.strip(), response_text.strip()
+                text += chunk.choices[0].delta.content
+        return text.strip()
     except Exception as e:
-        print(f"  DeepSeek error: {e}")
-        return "", ""
+        print(f"  NVIDIA error: {e}")
+        return ""
 
-# ── SFT Q&A generation ────────────────────────────────────────
+# ── Data generation ───────────────────────────────────────────
 
-def chunk_to_qa(chunk, domain, paper_title):
-    prompt = f"""You are generating training data for Cooper, a senior physical engineering reasoning AI.
+def chunk_to_qa(chunk, domain, title, problem):
+    prompt = f"""You are generating training data for Cooper, an AI co-engineer for physical engineering.
 
-This excerpt is from a recent research paper: "{paper_title}"
+Cooper's purpose: when given an engineering problem, suggest creative technically grounded solutions by combining deep domain knowledge with cross-domain transfer — like a 20-year senior engineer who has worked across aerospace, robotics, marine, civil, medical and materials.
 
-From this excerpt generate exactly 15 training examples.
+Paper: "{title}"
+Core engineering problem this addresses: "{problem}"
+Domain: {domain}
+
+Generate exactly 20 training examples from this excerpt.
 
 STRICT RULES:
-- Questions must be specific and technical — no vague questions
-- Thinking must show full first-principles reasoning — identify physics, apply equations, show working, check units
-- Response must read like a senior engineer — precise, numbered steps, values with units
-- Include at least 3 cross-domain examples — where this concept appears in another engineering field
-- Focus on novel research insights — what does this paper contribute beyond textbook knowledge
+- Frame questions as real engineering problem statements Cooper must solve
+- Thinking must: (1) identify the physics, (2) check what other domains have solved this, (3) apply first principles with equations and numbers, (4) propose specific creative solutions
+- Responses must propose concrete solutions — not just explain theory
+- At least 6 of 20 must involve cross-domain insight (e.g. applying a biology solution to aerospace, or a naval solution to robotics)
+- Include specific numbers, equations, and design parameters wherever possible
+- Avoid generic textbook answers — Cooper suggests ideas, not recites facts
 
-Return ONLY a valid JSON array. No markdown. No preamble. Schema:
+Return ONLY valid JSON array. No markdown. No preamble:
 [{{
-  "prompt": "specific technical engineering question",
-  "thinking": "1. State the physical problem\\n2. Identify relevant domains\\n3. List first principles and equations\\n4. Full step by step working with values\\n5. Sanity check",
-  "response": "precise engineering answer with equations, numbers, units and domain references",
+  "prompt": "Specific engineering problem statement to solve",
+  "thinking": "1. Physics of the problem\\n2. What domains have solved analogous problems\\n3. First principles and equations\\n4. Proposed solution ideas with numbers\\n5. Best recommendation with justification",
+  "response": "Senior engineer co-pilot response: specific creative solution proposals with physics backing, numbers, cross-domain references where relevant",
   "domain": "{domain}",
-  "cross_domain": true
+  "cross_domain": true or false,
+  "problem_type": "design|analysis|optimisation|troubleshooting|concept"
 }}]
 
-Paper excerpt:
+Excerpt:
 {chunk[:7000]}"""
 
-    thinking, response = call_deepseek(prompt)
+    response = call_llm(prompt)
     if not response:
         return []
     try:
@@ -141,40 +214,44 @@ Paper excerpt:
             text = text.split("```")[1]
             if text.startswith("json"):
                 text = text[4:]
-        records = json.loads(text)
-        # Inject DeepSeek's actual thinking into the training records
-        for r in records:
-            if not r.get("thinking"):
-                r["thinking"] = thinking[:2000] if thinking else ""
-        return records
+        return json.loads(text)
     except Exception as e:
         print(f"  Q&A parse error: {e}")
         return []
 
-# ── DPO preference generation ─────────────────────────────────
+def chunk_to_dpo(chunk, domain, title, problem):
+    prompt = f"""You are generating DPO preference data for Cooper, an AI co-engineer.
 
-def chunk_to_dpo(chunk, domain, paper_title):
-    prompt = f"""You are generating DPO preference training data for Cooper, a senior engineering reasoning AI.
+Paper: "{title}"
+Engineering problem: "{problem}"
+Domain: {domain}
 
-This excerpt is from a recent research paper: "{paper_title}"
+Generate exactly 10 preference pairs.
 
-From this excerpt generate exactly 8 preference pairs.
+chosen — Cooper at its best:
+- Identifies the core physics of the problem
+- Draws on analogies from other engineering domains (aerospace to robotics, biology to structures etc)
+- Proposes specific creative solution ideas with numbers and design parameters
+- Acts like a brilliant engineering colleague suggesting ideas
 
-- chosen: senior engineer, 20 years experience — deep physics, cross-domain, first principles, specific numbers, references novel research
-- rejected: junior engineer — correct but shallow, generic, missing physics depth
+rejected — mediocre response:
+- Correct but shallow and generic
+- Just explains theory without proposing solutions
+- No cross-domain thinking
+- Could be any textbook answer
 
-Return ONLY a valid JSON array. No markdown. No preamble. Schema:
+Return ONLY valid JSON array. No markdown. No preamble:
 [{{
-  "prompt": "specific technical engineering question",
-  "chosen": "senior engineer response — deep reasoning, first principles, cross-domain, specific",
-  "rejected": "junior engineer response — correct but shallow and generic",
+  "prompt": "Engineering problem statement",
+  "chosen": "Creative co-engineer response with specific solutions, cross-domain insight, numbers and physics",
+  "rejected": "Generic shallow response, explains theory but proposes nothing creative or specific",
   "domain": "{domain}"
 }}]
 
-Paper excerpt:
+Excerpt:
 {chunk[:7000]}"""
 
-    _, response = call_deepseek(prompt)
+    response = call_llm(prompt)
     if not response:
         return []
     try:
@@ -199,67 +276,72 @@ def main():
         books = json.load(f)
 
     book = books[args.book_index]
-    print(f"\n{'='*50}")
-    print(f"Query: {book['title']}")
-    print(f"Domain: {book['domain']}")
-    print(f"{'='*50}\n")
+    source = book.get("source", "semantic_scholar")
+    problem = book.get("problem", "")
 
-    papers = search_arxiv(book["arxiv_query"], max_results=5)
-    if not papers:
-        print("ERROR: No papers found on ArXiv")
+    print(f"\n{'='*55}")
+    print(f"[{args.book_index}] {book['title']}")
+    print(f"Source: {source} | Domain: {book['domain']}")
+    print(f"Problem: {problem}")
+    print(f"{'='*55}\n")
+
+    # Fetch papers
+    if source == "arxiv":
+        papers = fetch_arxiv_direct(book["arxiv_id"])
+    elif source == "semantic_scholar":
+        papers = fetch_semantic_scholar(
+            book["semantic_query"],
+            book.get("min_citations", 100)
+        )
+    elif source == "nasa_ntrs":
+        papers = fetch_nasa_ntrs(book["nasa_query"])
+    else:
+        print(f"Unknown source: {source}")
         return
 
-    print(f"Found {len(papers)} papers")
+    if not papers:
+        print("ERROR: No papers fetched")
+        return
 
     all_qa = []
     all_dpo = []
 
-    for arxiv_id, title, pdf_url in papers:
-        print(f"\nProcessing: {title}")
-        print(f"ArXiv ID: {arxiv_id}")
-
+    for title, pdf_url in papers:
+        print(f"\n--- {title[:70]}")
         if not download_pdf(pdf_url):
-            print("Skipping — download failed")
+            print("Skipping")
             continue
-
         chunks = extract_text_chunks("/tmp/paper.pdf")
         if not chunks:
-            print("Skipping — no text extracted")
             os.remove("/tmp/paper.pdf")
             continue
-
         for i, chunk in enumerate(chunks):
-            print(f"  Q&A chunk {i+1}/{len(chunks)}")
-            qa = chunk_to_qa(chunk, book["domain"], title)
+            print(f"  Q&A {i+1}/{len(chunks)}")
+            qa = chunk_to_qa(chunk, book["domain"], title, problem)
             all_qa.extend(qa)
             print(f"    → {len(qa)} records")
-
-            print(f"  DPO chunk {i+1}/{len(chunks)}")
-            dpo = chunk_to_dpo(chunk, book["domain"], title)
+            print(f"  DPO {i+1}/{len(chunks)}")
+            dpo = chunk_to_dpo(chunk, book["domain"], title, problem)
             all_dpo.extend(dpo)
             print(f"    → {len(dpo)} pairs")
-
-            time.sleep(2)
-
+            time.sleep(1)
         os.remove("/tmp/paper.pdf")
-        time.sleep(3)
+        time.sleep(2)
 
-    # Save SFT JSONL
     os.makedirs("dataset/qa_jsonl", exist_ok=True)
     qa_path = f"dataset/qa_jsonl/{book['domain']}_{args.book_index}.jsonl"
     with open(qa_path, "w") as f:
-        for record in all_qa:
-            f.write(json.dumps(record) + "\n")
+        for r in all_qa:
+            f.write(json.dumps(r) + "\n")
 
-    # Save DPO JSONL
     os.makedirs("dataset/dpo_jsonl", exist_ok=True)
     dpo_path = f"dataset/dpo_jsonl/{book['domain']}_{args.book_index}.jsonl"
     with open(dpo_path, "w") as f:
-        for record in all_dpo:
-            f.write(json.dumps(record) + "\n")
+        for r in all_dpo:
+            f.write(json.dumps(r) + "\n")
 
-    print(f"\nQ&A records: {len(all_qa)} → {qa_path}")
-    print(f"DPO pairs: {len(all_dpo)} → {dpo_path}")
+    print(f"\nQ&A: {len(all_qa)} → {qa_path}")
+    print(f"DPO: {len(all_dpo)} → {dpo_path}")
     print("Done.")
 
 if __name__ == "__main__":
