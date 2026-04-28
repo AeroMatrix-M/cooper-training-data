@@ -1,5 +1,4 @@
 name: Generate Cooper Training Data
-
 on:
   workflow_dispatch:
     inputs:
@@ -7,27 +6,21 @@ on:
         description: 'Book index to process (0-65)'
         required: true
         default: '0'
-
 permissions:
   contents: write
-
 jobs:
   generate:
     runs-on: ubuntu-latest
     timeout-minutes: 300
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: pip install requests pymupdf openai
-
       - name: Run processing script
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
@@ -35,16 +28,15 @@ jobs:
         run: |
           python scripts/download_and_process.py \
             --book-index ${{ github.event.inputs.book_index }}
-
-      - name: Commit output to repo
-     run: |
-        git config user.email "cooper-bot@aeromatrix.com"
-        git config user.name "Cooper Training Bot"
-        git add dataset/
-        git diff --staged --quiet || git commit -m \
-          "Training data: book ${{ github.event.inputs.book_index }}"
-        for i in 1 2 3 4 5; do
-          git pull --rebase origin main && git push && break
-          echo "Push failed, retry $i"
-          sleep $((RANDOM % 10 + 5))
-        done
+      - name: Upload to HuggingFace
+        run: |
+          pip install huggingface_hub
+          python -c "
+          from huggingface_hub import HfApi
+          api = HfApi(token='${{ secrets.HF_TOKEN }}')
+          api.upload_folder(
+            folder_path='dataset/',
+            repo_id='luckydestructor/cooper-training-dataset',
+            repo_type='dataset'
+          )
+          "
