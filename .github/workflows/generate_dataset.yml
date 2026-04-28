@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       book_index:
-        description: 'Book index to process (0-174)'
+        description: 'Book index to process (0-65)'
         required: true
         default: '0'
 
