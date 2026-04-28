@@ -36,11 +36,12 @@ jobs:
           python scripts/download_and_process.py \
             --book-index ${{ github.event.inputs.book_index }}
 
-      - name: Commit output to repo
-        run: |
+      - - name: Commit output to repo
+          run: |
           git config user.email "cooper-bot@aeromatrix.com"
           git config user.name "Cooper Training Bot"
           git add dataset/
           git diff --staged --quiet || git commit -m \
             "Training data: book ${{ github.event.inputs.book_index }}"
+          git pull --rebase origin main
           git push
