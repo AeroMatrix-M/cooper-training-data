@@ -29,14 +29,17 @@ jobs:
           python scripts/download_and_process.py \
             --book-index ${{ github.event.inputs.book_index }}
       - name: Upload to HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           pip install huggingface_hub
-          python -c "
-          from huggingface_hub import HfApi
-          api = HfApi(token='${{ secrets.HF_TOKEN }}')
-          api.upload_folder(
-            folder_path='dataset/',
-            repo_id='luckydestructor/cooper-training-dataset',
-            repo_type='dataset'
-          )
-          "
+          python - <<'EOF'
+import os
+from huggingface_hub import HfApi
+api = HfApi(token=os.environ["HF_TOKEN"])
+api.upload_folder(
+    folder_path="dataset/",
+    repo_id="luckydestructor/cooper-training-dataset",
+    repo_type="dataset"
+)
+EOF
