@@ -33,8 +33,6 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           pip install huggingface_hub
-          hf login --token $HF_TOKEN
-          hf upload luckydestructor/cooper-training-dataset dataset/ --repo-type=dataset
-          "
+          hf upload luckydestructor/cooper-training-dataset dataset/ --repo-type=dataset --token $HF_TOKEN
           PYEOF
           python upload.py
