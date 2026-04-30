@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       book_index:
-        description: 'Book index to process (0-66)'
+        description: 'Book index to process (0-65)'
         required: true
         default: '0'
 permissions:
@@ -34,5 +34,4 @@ jobs:
         run: |
           pip install huggingface_hub
           hf upload luckydestructor/cooper-training-dataset dataset/ --repo-type=dataset --token $HF_TOKEN
-          PYEOF
-          python upload.py
+          
