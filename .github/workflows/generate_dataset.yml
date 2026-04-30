@@ -33,15 +33,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           pip install huggingface_hub
-          python -c "
-          import os
-          from huggingface_hub import HfApi
-          api = HfApi(token=os.environ['HF_TOKEN'])
-          api.upload_folder(
-            folder_path='dataset/',
-            repo_id='luckydestructor/cooper-training-dataset',
-            repo_type='dataset'
-          )
+          hf login --token $HF_TOKEN
+          hf upload luckydestructor/cooper-training-dataset dataset/ --repo-type=dataset
           "
           PYEOF
           python upload.py
