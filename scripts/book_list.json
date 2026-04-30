@@ -64,7 +64,7 @@
   {"title": "Cross domain heart pump to rocket turbopump", "source": "semantic_scholar", "semantic_query": "centrifugal pump impeller design efficiency cavitation blood cardiac", "min_citations": 200, "domain": "cross_domain", "problem": "Applying cardiac pump impeller principles to rocket turbopump cavitation problems", "index": 62},
   {"title": "Cross domain racing diffuser to nacelle afterbody", "source": "semantic_scholar", "semantic_query": "ground effect diffuser adverse pressure gradient separation control racing", "min_citations": 150, "domain": "cross_domain", "problem": "Applying racing car ground effect diffuser separation control to nacelle afterbody design", "index": 63},
   {"title": "Ship hull bulbous bow wave resistance", "source": "semantic_scholar", "semantic_query": "ship hull resistance optimization bulbous bow wave making drag", "min_citations": 150, "domain": "marine", "problem": "Minimising wave making resistance in ship hulls through bow geometry optimisation", "index": 64},
-  {"title": "Propeller cavitation acoustic signature naval", "source": "semantic_scholar", "semantic_query": "propeller cavitation noise underwater acoustic signature reduction naval", "min_citations": 150, "domain": "marine", "problem": "Eliminating propeller cavitation to reduce acoustic signature in naval vessels", "index": 65}
+  {"title": "Propeller cavitation acoustic signature naval", "source": "semantic_scholar", "semantic_query": "propeller cavitation noise underwater acoustic signature reduction naval", "min_citations": 150, "domain": "marine", "problem": "Eliminating propeller cavitation to reduce acoustic signature in naval vessels", "index": 65},
 {
   "title": "Test Entry",
   "domain": "test",
