@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       book_index:
-        description: 'Book index to process (0-66)'
+        description: 'Book index to process (0-65)'
         required: true
         default: '0'
 permissions:
@@ -25,6 +25,8 @@ jobs:
         env:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
           NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           python scripts/download_and_process.py \
             --book-index ${{ github.event.inputs.book_index }}
@@ -34,4 +36,3 @@ jobs:
         run: |
           pip install huggingface_hub
           hf upload luckydestructor/cooper-training-dataset dataset/ --repo-type=dataset --token $HF_TOKEN
-          
