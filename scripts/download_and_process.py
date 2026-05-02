@@ -13,14 +13,28 @@ sambanova_client = OpenAI(
     api_key=os.environ["SAMBANOVA_API_KEY"]
 )
 
-# NVIDIA NIM fallback
+# NVIDIA fallback 1
 nvidia_client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
     api_key=os.environ["NVIDIA_API_KEY"]
 )
 
+# Mistral fallback 2
+mistral_client = OpenAI(
+    base_url="https://api.mistral.ai/v1",
+    api_key=os.environ["MISTRAL_API_KEY"]
+)
+
+# Groq fallback 3
+groq_client = OpenAI(
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.environ["GROQ_API_KEY"]
+)
+
 SAMBANOVA_MODEL = "Meta-Llama-3.3-70B-Instruct"
-NVIDIA_MODEL = "deepseek-ai/deepseek-v3.2"
+NVIDIA_MODEL = "meta/llama-3.3-70b-instruct"
+MISTRAL_MODEL = "mistral-small-latest"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # ── Source fetchers ───────────────────────────────────────────
 
@@ -84,7 +98,6 @@ def fetch_semantic_scholar(query, min_citations=100):
             ext_ids = p.get("externalIds", {})
             arxiv_id = ext_ids.get("ArXiv")
 
-            # Use open access PDF or ArXiv ID fallback
             pdf_url = None
             if pdf_info and pdf_info.get("url"):
                 pdf_url = pdf_info["url"]
@@ -105,7 +118,6 @@ def fetch_semantic_scholar(query, min_citations=100):
         for p in top:
             print(f"  [{p['citations']} citations, {p['year']}] {p['title'][:70]}")
 
-        # ArXiv fallback if nothing qualified
         if not top:
             print("No qualified papers found — falling back to ArXiv search")
             return fetch_arxiv_search(query)
@@ -134,7 +146,6 @@ def fetch_nasa_ntrs(query):
         for t, _ in papers:
             print(f"  {t[:70]}")
 
-        # ArXiv fallback if nothing
         if not papers:
             print("No NASA reports found — falling back to ArXiv search")
             return fetch_arxiv_search(query)
@@ -183,9 +194,10 @@ def extract_text_chunks(pdf_path, chunk_pages=8):
         print(f"Extraction error: {e}")
         return []
 
-# ── LLM call SambaNova primary NVIDIA fallback ────────────────
+# ── LLM call chain ────────────────────────────────────────────
 
 def call_llm(prompt):
+    # Primary: SambaNova
     try:
         response = sambanova_client.chat.completions.create(
             model=SAMBANOVA_MODEL,
@@ -197,6 +209,7 @@ def call_llm(prompt):
     except Exception as e:
         print(f"  SambaNova error: {e} — trying NVIDIA")
 
+    # Fallback 1: NVIDIA
     try:
         completion = nvidia_client.chat.completions.create(
             model=NVIDIA_MODEL,
@@ -204,7 +217,6 @@ def call_llm(prompt):
             temperature=0.7,
             top_p=0.95,
             max_tokens=8192,
-            extra_body={"chat_template_kwargs": {"thinking": True}},
             stream=True
         )
         text = ""
@@ -213,9 +225,38 @@ def call_llm(prompt):
                 continue
             if chunk.choices[0].delta.content is not None:
                 text += chunk.choices[0].delta.content
-        return text.strip()
+        if text.strip():
+            return text.strip()
+        print("  NVIDIA returned empty — trying Mistral")
     except Exception as e:
-        print(f"  NVIDIA error: {e}")
+        print(f"  NVIDIA error: {e} — trying Mistral")
+
+    # Fallback 2: Mistral
+    try:
+        response = mistral_client.chat.completions.create(
+            model=MISTRAL_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=8192
+        )
+        result = response.choices[0].message.content.strip()
+        if result:
+            return result
+        print("  Mistral returned empty — trying Groq")
+    except Exception as e:
+        print(f"  Mistral error: {e} — trying Groq")
+
+    # Fallback 3: Groq
+    try:
+        response = groq_client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=8192
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"  Groq error: {e}")
         return ""
 
 # ── Data generation ───────────────────────────────────────────
@@ -332,7 +373,6 @@ def main():
     print(f"Problem: {problem}")
     print(f"{'='*55}\n")
 
-    # Fetch papers based on source type
     if source == "arxiv":
         papers = fetch_arxiv_direct(book["arxiv_id"])
     elif source == "semantic_scholar":
