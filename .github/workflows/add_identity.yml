@@ -1,4 +1,5 @@
-name: Add Identity Records
+- name: Login to HuggingFace
+        run: hf auth login --token ${{ secrets.HF_TOKEN }}
 
 on:
   workflow_dispatch:
