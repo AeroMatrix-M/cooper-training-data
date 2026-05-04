@@ -13,4 +13,4 @@ jobs:
       - name: Run identity script
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python add_identity.py
+        run: python scripts/add_identity.py
