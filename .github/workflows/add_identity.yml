@@ -1,5 +1,4 @@
-- name: Login to HuggingFace
-        run: hf auth login --token ${{ secrets.HF_TOKEN }}
+name: Add Identity Records
 
 on:
   workflow_dispatch:
@@ -12,6 +11,6 @@ jobs:
       - name: Install dependencies
         run: pip install datasets huggingface_hub
       - name: Login to HuggingFace
-        run: huggingface-cli login --token ${{ secrets.HF_TOKEN }}
+        run: hf auth login --token ${{ secrets.HF_TOKEN }}
       - name: Run identity script
         run: python scripts/add_identity.py
