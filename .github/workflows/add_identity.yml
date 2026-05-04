@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: pip install datasets huggingface_hub
+      - name: Login to HuggingFace
+        run: huggingface-cli login --token ${{ secrets.HF_TOKEN }}
       - name: Run identity script
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python scripts/add_identity.py
