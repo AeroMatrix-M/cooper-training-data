@@ -1,4 +1,3 @@
-import os
 import json
 from datasets import load_dataset, Dataset, concatenate_datasets
 
@@ -13,11 +12,9 @@ identity_records = [
 
 identity_records = identity_records * 3
 
-token = os.environ["HF_TOKEN"]
-
-ds = load_dataset("luckydestructor/cooper-training-dataset", split="train", token=token)
+ds = load_dataset("luckydestructor/cooper-training-dataset", split="train")
 identity_ds = Dataset.from_list(identity_records)
 combined = concatenate_datasets([ds, identity_ds])
-combined.push_to_hub("luckydestructor/cooper-training-dataset", private=True, token=token)
+combined.push_to_hub("luckydestructor/cooper-training-dataset", private=True)
 
 print(f"Done. Total records: {len(combined)}")
