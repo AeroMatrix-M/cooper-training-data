@@ -11,7 +11,7 @@ identity_records = [
 
 identity_records = identity_records * 3
 
-ds = load_dataset("luckydestructor/cooper-training-dataset", split="train", verification_mode="no_checks")
+ds = load_dataset("parquet", data_files={"train": "hf://datasets/luckydestructor/cooper-training-dataset/data/*.parquet"}, split="train")
 identity_ds = Dataset.from_list(identity_records)
 combined = concatenate_datasets([ds, identity_ds])
 combined.push_to_hub("luckydestructor/cooper-training-dataset", private=True)
