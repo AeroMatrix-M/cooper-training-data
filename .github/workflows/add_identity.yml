@@ -1,0 +1,16 @@
+name: Add Identity Records
+
+on:
+  workflow_dispatch:
+
+jobs:
+  add-identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: pip install datasets huggingface_hub
+      - name: Run identity script
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python add_identity.py
